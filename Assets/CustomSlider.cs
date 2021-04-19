@@ -1,5 +1,4 @@
-﻿using UnityEditor.Timeline;
-using UnityEngine.UI;
+﻿using UnityEngine.UI;
 
 public class CustomSlider : Slider
 {

@@ -2,6 +2,7 @@
 using UnityEditor;
 using UnityEngine;
 
+#if UNITY_EDITOR
 public class BeatCapturerContainer : MonoBehaviour
 {
     [SerializeField] public List<BeatParticleCapture> capturers = new List<BeatParticleCapture>();
@@ -40,3 +41,4 @@ public class BeatCapturerContainerEditor : Editor
         }
     }
 }
+#endif

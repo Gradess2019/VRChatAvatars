@@ -2,7 +2,7 @@
 using UnityEditor;
 using UnityEngine;
 
-[RequireComponent(typeof(ParticleSystem))]
+#if UNITY_EDITOR
 public class BeatParticleCapture : MonoBehaviour
 {
     public ParticleSystem particle;
@@ -94,7 +94,10 @@ public class BeatParticleCapture : MonoBehaviour
         return path;
     }
 }
+#endif
 
+
+#if UNITY_EDITOR
 [CustomEditor(typeof(BeatParticleCapture))]
 public class BeatParticleCaptureEditor : Editor
 {
@@ -162,3 +165,4 @@ public class BeatParticleCaptureEditor : Editor
         }
     }
 }
+#endif

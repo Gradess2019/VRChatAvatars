@@ -26,7 +26,7 @@ public class BeatCapturer : MonoBehaviour
         functions.Invoke(listener, clip);
     }
 }
-
+#if UNITY_EDITOR
 [CustomEditor(typeof(BeatCapturer))]
 public class BeatCapturerEditor : Editor
 {
@@ -43,3 +43,4 @@ public class BeatCapturerEditor : Editor
         }
     }
 }
+#endif
