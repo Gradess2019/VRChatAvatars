@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -340790334, guid: 67cc4cb7839cd3741b63733d5adf0442, type: 3}
+  m_Name: Marine-MainMenu
+  m_EditorClassIdentifier: 
+  controls:
+  - name: Emote Menu 1
+    icon: {fileID: 2800000, guid: afc5a4078732f3244aa6a6bf1182ca2f, type: 3}
+    type: 103
+    parameter:
+      name: 
+    value: 1
+    style: 0
+    subMenu: {fileID: 11400000, guid: 4d7d4a9e9348e1a46b7effc4e5892f61, type: 2}
+    subParameters: []
+    labels: []
+  - name: Emote Menu 2
+    icon: {fileID: 2800000, guid: afc5a4078732f3244aa6a6bf1182ca2f, type: 3}
+    type: 103
+    parameter:
+      name: 
+    value: 1
+    style: 0
+    subMenu: {fileID: 11400000, guid: 92babc7959c35ba4f922c73d0433a76a, type: 2}
+    subParameters: []
+    labels: []
+  - name: Accessories
+    icon: {fileID: 2800000, guid: 8f3796345efa7b74b90a14011957085c, type: 3}
+    type: 103
+    parameter:
+      name: 
+    value: 1
+    style: 0
+    subMenu: {fileID: 11400000, guid: 1a586aca09da8b84f96c6d94921a9132, type: 2}
+    subParameters: []
+    labels: []
+  - name: Sound Menu
+    icon: {fileID: 2800000, guid: 9a25f3c08b2e17446a905c11a22032e2, type: 3}
+    type: 103
+    parameter:
+      name: 
+    value: 1
+    style: 0
+    subMenu: {fileID: 11400000, guid: 2a60291afbefb8d40ac81928278e5eb4, type: 2}
+    subParameters: []
+    labels: []

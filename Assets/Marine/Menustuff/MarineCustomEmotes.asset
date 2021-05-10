@@ -1,0 +1,95 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -340790334, guid: 67cc4cb7839cd3741b63733d5adf0442, type: 3}
+  m_Name: MarineCustomEmotes
+  m_EditorClassIdentifier: 
+  controls:
+  - name: Be Seeing You
+    icon: {fileID: 0}
+    type: 101
+    parameter:
+      name: VRCEmote
+    value: 18
+    style: 0
+    subMenu: {fileID: 0}
+    subParameters: []
+    labels: []
+  - name: Sleep 1
+    icon: {fileID: 2800000, guid: 6549cca7b45a2114487e75f55856f8c0, type: 3}
+    type: 102
+    parameter:
+      name: VRCEmote
+    value: 19
+    style: 0
+    subMenu: {fileID: 0}
+    subParameters: []
+    labels: []
+  - name: Sleep 2
+    icon: {fileID: 2800000, guid: 6549cca7b45a2114487e75f55856f8c0, type: 3}
+    type: 102
+    parameter:
+      name: VRCEmote
+    value: 20
+    style: 0
+    subMenu: {fileID: 0}
+    subParameters: []
+    labels: []
+  - name: Bow
+    icon: {fileID: 2800000, guid: 58b0589121204524abcd768af44b3587, type: 3}
+    type: 101
+    parameter:
+      name: VRCEmote
+    value: 21
+    style: 0
+    subMenu: {fileID: 0}
+    subParameters: []
+    labels: []
+  - name: Crying
+    icon: {fileID: 2800000, guid: 915b3e6ad36d46741ab7da4fd67f2201, type: 3}
+    type: 101
+    parameter:
+      name: VRCEmote
+    value: 22
+    style: 0
+    subMenu: {fileID: 0}
+    subParameters: []
+    labels: []
+  - name: Applaud
+    icon: {fileID: 2800000, guid: 6a94137bcaa0fc44592a815d8504b7c0, type: 3}
+    type: 101
+    parameter:
+      name: VRCEmote
+    value: 23
+    style: 0
+    subMenu: {fileID: 0}
+    subParameters: []
+    labels: []
+  - name: Pose
+    icon: {fileID: 0}
+    type: 101
+    parameter:
+      name: VRCEmote
+    value: 24
+    style: 0
+    subMenu: {fileID: 0}
+    subParameters: []
+    labels: []
+  - name: Stretch
+    icon: {fileID: 2800000, guid: ecad3b2337a524041b60cb82eedf7a2c, type: 3}
+    type: 101
+    parameter:
+      name: VRCEmote
+    value: 25
+    style: 0
+    subMenu: {fileID: 0}
+    subParameters: []
+    labels: []
