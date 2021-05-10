@@ -8,14 +8,14 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: shoes
-  m_Shader: {fileID: 4800000, guid: b66eeb029a9429446bb5c30158fb0f3d, type: 3}
-  m_ShaderKeywords: VIGNETTE_MASKED _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+  m_Shader: {fileID: 4800000, guid: 98552d27b7c4f0b4ca129036a2343812, type: 3}
+  m_ShaderKeywords: VIGNETTE_MASKED _EMISSION _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: 2000
   stringTagMap:
-    OptimizedShaderFolder: shoes-d8cdc499
+    OptimizedShaderFolder: shoes-34d1569f
     OriginalShader: ".poiyomi/\u2022 Poiyomi Toon \u2022"
     RenderType: Opaque
   disabledShaderPasses: []
@@ -513,7 +513,7 @@ Material:
     - _ClearCoatSmoothnessMapUVAnimated: 0
     - _ClearCoatTintAnimated: 0
     - _Clip: 0.5
-    - _ColorAnimated: 0
+    - _ColorAnimated: 1
     - _ColorMask: 15
     - _ColorMaskAnimated: 0
     - _ContinuousDissolve: 0
@@ -700,7 +700,7 @@ Material:
     - _EmissionCenterOutSpeed1Animated: 0
     - _EmissionCenterOutSpeedAnimated: 0
     - _EmissionColor1Animated: 0
-    - _EmissionColorAnimated: 0
+    - _EmissionColorAnimated: 1
     - _EmissionHueShift: 0
     - _EmissionHueShift1: 0
     - _EmissionHueShift1Animated: 0
@@ -741,7 +741,7 @@ Material:
     - _EmissionScrollingVertexColor1: 0
     - _EmissionScrollingVertexColor1Animated: 0
     - _EmissionScrollingVertexColorAnimated: 0
-    - _EmissionStrength: 0.62
+    - _EmissionStrength: 1
     - _EmissionStrength1: 0
     - _EmissionStrength1Animated: 0
     - _EmissionStrengthAnimated: 0
@@ -779,7 +779,7 @@ Material:
     - _EnableDissolveAnimated: 0
     - _EnableDistortion: 0
     - _EnableDistortionAnimated: 0
-    - _EnableEmission: 0
+    - _EnableEmission: 1
     - _EnableEmission1: 0
     - _EnableEmission1Animated: 0
     - _EnableEmissionAnimated: 0
@@ -1376,7 +1376,7 @@ Material:
     - _SampleWorldAnimated: 0
     - _Saturation: 0
     - _SaturationAnimated: 0
-    - _ScrollingEmission: 0
+    - _ScrollingEmission: 1
     - _ScrollingEmission1: 0
     - _ScrollingEmission1Animated: 0
     - _ScrollingEmissionAnimated: 0
@@ -1645,7 +1645,7 @@ Material:
     - footer_youtube: 0
     - m_LockingInfo: 0
     - m_ParallaxMap: 0
-    - m_Special_Effects: 0
+    - m_Special_Effects: 1
     - m_end_Alpha: 0
     - m_end_BonusSliders: 0
     - m_end_CenterOutEmission: 0
@@ -1709,7 +1709,7 @@ Material:
     - m_end_subsurface: 0
     - m_end_vertexManipulation: 0
     - m_lightingOptions: 0
-    - m_mainOptions: 0
+    - m_mainOptions: 1
     - m_outlineOptions: 0
     - m_renderingOptions: 0
     - m_start_Alpha: 0
@@ -1746,7 +1746,7 @@ Material:
     - m_start_distanceFade: 0
     - m_start_distortionFlow: 0
     - m_start_emission1Options: 0
-    - m_start_emissionOptions: 0
+    - m_start_emissionOptions: 1
     - m_start_flipBook: 0
     - m_start_glitter: 0
     - m_start_glitterRandom: 0
@@ -1767,14 +1767,14 @@ Material:
     - m_start_reflectionRim: 0
     - m_start_rimLightOptions: 0
     - m_start_rimWidthNoise: 0
-    - m_start_scrollingEmissionOptions: 0
+    - m_start_scrollingEmissionOptions: 1
     - m_start_scrollingEmissionOptions1: 0
     - m_start_shadowTexture: 0
     - m_start_specular: 0
     - m_start_specular1: 0
     - m_start_subsurface: 0
     - m_start_vertexManipulation: 0
-    - shader_is_using_thry_editor: 0
+    - shader_is_using_thry_editor: 69
     - shader_master_label: 0
     - shader_presets: 0
     - shader_properties_label_file: 0
@@ -1791,7 +1791,7 @@ Material:
     - _ClearCoatMaskPan: {r: 0, g: 0, b: 0, a: 0}
     - _ClearCoatSmoothnessMapPan: {r: 0, g: 0, b: 0, a: 0}
     - _ClearCoatTint: {r: 1, g: 1, b: 1, a: 1}
-    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _Color: {r: 0.09433959, g: 0.09433959, b: 0.09433959, a: 1}
     - _DecalColor: {r: 1, g: 1, b: 1, a: 1}
     - _DecalMaskPan: {r: 0, g: 0, b: 0, a: 0}
     - _DecalPosition: {r: 0.5, g: 0.5, b: 0, a: 0}
@@ -1812,7 +1812,7 @@ Material:
     - _DistortionMaskPan: {r: 0, g: 0, b: 0, a: 0}
     - _DistortionSpeed: {r: 0.5, g: 0.5, b: 0, a: 0}
     - _DistortionSpeed1: {r: 0.5, g: 0.5, b: 0, a: 0}
-    - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
+    - _EmissionColor: {r: 0.6745098, g: 0, b: 0, a: 1}
     - _EmissionColor1: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionMap1Pan: {r: 0, g: 0, b: 0, a: 0}
     - _EmissionMapPan: {r: 0, g: 0, b: 0, a: 0}

@@ -5,6 +5,9 @@ using UnityEngine;
 public class AnimationUtils : MonoBehaviour
 {
     public Animator animator;
+    public Material material;
+    
+    [HideInInspector]
     public List<string> properties;
     private void Update()
     {

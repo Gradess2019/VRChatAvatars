@@ -8,14 +8,14 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: face
-  m_Shader: {fileID: 4800000, guid: 3d6cf068e1bfa6446a45c44dfcbdcb37, type: 3}
-  m_ShaderKeywords: VIGNETTE_MASKED _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+  m_Shader: {fileID: 4800000, guid: d7d4f6bbaae8fdf4695dacb4d0bba64f, type: 3}
+  m_ShaderKeywords: VIGNETTE_MASKED _EMISSION _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: 2000
   stringTagMap:
-    OptimizedShaderFolder: face-72bc0248
+    OptimizedShaderFolder: face-35de4772
     OriginalShader: ".poiyomi/\u2022 Poiyomi Toon \u2022"
     RenderType: Opaque
   disabledShaderPasses: []
@@ -684,7 +684,7 @@ Material:
     - _EmissionBaseColorAsMap1: 0
     - _EmissionBaseColorAsMap1Animated: 0
     - _EmissionBaseColorAsMapAnimated: 0
-    - _EmissionBlinkingEnabled: 0
+    - _EmissionBlinkingEnabled: 1
     - _EmissionBlinkingEnabled1: 0
     - _EmissionBlinkingEnabledAnimated: 0
     - _EmissionBlinkingOffset: 0
@@ -745,15 +745,15 @@ Material:
     - _EmissionStrength1: 0
     - _EmissionStrength1Animated: 0
     - _EmissionStrengthAnimated: 0
-    - _EmissiveBlink_Max: 3
+    - _EmissiveBlink_Max: 7
     - _EmissiveBlink_Max1: 1
     - _EmissiveBlink_Max1Animated: 0
     - _EmissiveBlink_MaxAnimated: 0
-    - _EmissiveBlink_Min: 1
+    - _EmissiveBlink_Min: 0.2
     - _EmissiveBlink_Min1: 0
     - _EmissiveBlink_Min1Animated: 0
     - _EmissiveBlink_MinAnimated: 0
-    - _EmissiveBlink_Velocity: 4
+    - _EmissiveBlink_Velocity: 3
     - _EmissiveBlink_Velocity1: 4
     - _EmissiveBlink_Velocity1Animated: 0
     - _EmissiveBlink_VelocityAnimated: 0
@@ -779,7 +779,7 @@ Material:
     - _EnableDissolveAnimated: 0
     - _EnableDistortion: 0
     - _EnableDistortionAnimated: 0
-    - _EnableEmission: 0
+    - _EnableEmission: 1
     - _EnableEmission1: 0
     - _EnableEmission1Animated: 0
     - _EnableEmissionAnimated: 0
@@ -1645,7 +1645,7 @@ Material:
     - footer_youtube: 0
     - m_LockingInfo: 0
     - m_ParallaxMap: 0
-    - m_Special_Effects: 0
+    - m_Special_Effects: 1
     - m_end_Alpha: 0
     - m_end_BonusSliders: 0
     - m_end_CenterOutEmission: 0
@@ -1709,7 +1709,7 @@ Material:
     - m_end_subsurface: 0
     - m_end_vertexManipulation: 0
     - m_lightingOptions: 0
-    - m_mainOptions: 0
+    - m_mainOptions: 1
     - m_outlineOptions: 0
     - m_renderingOptions: 0
     - m_start_Alpha: 0
@@ -1736,7 +1736,7 @@ Material:
     - m_start_backFace: 0
     - m_start_bakedLighting: 0
     - m_start_blending: 0
-    - m_start_blinkingEmissionOptions: 0
+    - m_start_blinkingEmissionOptions: 1
     - m_start_blinkingEmissionOptions1: 0
     - m_start_clearCoat: 0
     - m_start_debugOptions: 0
@@ -1746,7 +1746,7 @@ Material:
     - m_start_distanceFade: 0
     - m_start_distortionFlow: 0
     - m_start_emission1Options: 0
-    - m_start_emissionOptions: 0
+    - m_start_emissionOptions: 1
     - m_start_flipBook: 0
     - m_start_glitter: 0
     - m_start_glitterRandom: 0
@@ -1774,7 +1774,7 @@ Material:
     - m_start_specular1: 0
     - m_start_subsurface: 0
     - m_start_vertexManipulation: 0
-    - shader_is_using_thry_editor: 0
+    - shader_is_using_thry_editor: 69
     - shader_master_label: 0
     - shader_presets: 0
     - shader_properties_label_file: 0
