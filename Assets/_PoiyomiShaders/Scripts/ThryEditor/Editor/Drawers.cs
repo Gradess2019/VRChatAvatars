@@ -16,7 +16,7 @@ namespace Thry
     {
         public override void OnGUI(Rect position, MaterialProperty prop, GUIContent label, MaterialEditor editor)
         {
-            GuiHelper.drawSmallTextureProperty(position, prop, label, editor, ((TextureProperty)ShaderEditor.currentlyDrawing.currentProperty).hasScaleOffset);
+            GuiHelper.drawSmallTextureProperty(position, prop, label, editor, ((TextureProperty)ShaderEditor.active.currentProperty).hasScaleOffset);
         }
 
         public override float GetPropertyHeight(MaterialProperty prop, string label, MaterialEditor editor)
@@ -30,7 +30,7 @@ namespace Thry
     {
         public override void OnGUI(Rect position, MaterialProperty prop, GUIContent label, MaterialEditor editor)
         {
-            GuiHelper.drawBigTextureProperty(position, prop, label, editor, ((TextureProperty)ShaderEditor.currentlyDrawing.currentProperty).hasScaleOffset);
+            GuiHelper.drawBigTextureProperty(position, prop, label, editor, ((TextureProperty)ShaderEditor.active.currentProperty).hasScaleOffset);
         }
 
         public override float GetPropertyHeight(MaterialProperty prop, string label, MaterialEditor editor)
@@ -44,7 +44,7 @@ namespace Thry
     {
         public override void OnGUI(Rect position, MaterialProperty prop, GUIContent label, MaterialEditor editor)
         {
-            GuiHelper.drawStylizedBigTextureProperty(position, prop, label, editor, ((TextureProperty)ShaderEditor.currentlyDrawing.currentProperty).hasScaleOffset);
+            GuiHelper.drawStylizedBigTextureProperty(position, prop, label, editor, ((TextureProperty)ShaderEditor.active.currentProperty).hasScaleOffset);
         }
 
         public override float GetPropertyHeight(MaterialProperty prop, string label, MaterialEditor editor)
@@ -54,6 +54,121 @@ namespace Thry
         }
     }
 
+    public class ThryToggleUIDrawer : MaterialPropertyDrawer
+    {
+        public string keyword;
+        private bool isFirstGUICall = true;
+        public ThryToggleUIDrawer()
+        {
+        }
+
+        public ThryToggleUIDrawer(string keyword)
+        {
+        }
+
+        protected virtual void SetKeyword(MaterialProperty prop, bool on)
+        {
+        }
+
+        protected virtual void CheckKeyword(MaterialProperty prop)
+        {
+        }
+
+        static bool IsPropertyTypeSuitable(MaterialProperty prop)
+        {
+            return prop.type == MaterialProperty.PropType.Float || prop.type == MaterialProperty.PropType.Range;
+        }
+
+        public override float GetPropertyHeight(MaterialProperty prop, string label, MaterialEditor editor)
+        {
+            if (!IsPropertyTypeSuitable(prop))
+            {
+                return EditorGUIUtility.singleLineHeight * 2.5f;
+            }
+            return base.GetPropertyHeight(prop, label, editor);
+        }
+
+        public override void OnGUI(Rect position, MaterialProperty prop, GUIContent label, MaterialEditor editor)
+        {
+            if (!IsPropertyTypeSuitable(prop))
+            {
+                return;
+            }
+            if (isFirstGUICall)
+            {
+                CheckKeyword(prop);
+                isFirstGUICall = false;
+            }
+            //why is this not inFirstGUICall ? cause it seems drawers are kept between different openings of the shader editor, so this needs to be set again every time the shader editor is reopened for that material
+            (ShaderEditor.active.propertyDictionary[prop.name] as ShaderProperty).keyword = keyword;
+
+            EditorGUI.BeginChangeCheck();
+
+            bool value = (Math.Abs(prop.floatValue) > 0.001f);
+            EditorGUI.showMixedValue = prop.hasMixedValue;
+            value = EditorGUI.Toggle(position, label, value);
+            EditorGUI.showMixedValue = false;
+            if (EditorGUI.EndChangeCheck())
+            {
+                prop.floatValue = value ? 1.0f : 0.0f;
+                SetKeyword(prop, value);
+            }
+        }
+
+        public override void Apply(MaterialProperty prop)
+        {
+            base.Apply(prop);
+            if (!IsPropertyTypeSuitable(prop))
+                return;
+
+            if (prop.hasMixedValue)
+                return;
+
+            SetKeyword(prop, (Math.Abs(prop.floatValue) > 0.001f));
+        }
+    }
+
+    public class ThryToggleDrawer : ThryToggleUIDrawer
+    {
+        public ThryToggleDrawer()
+        {
+        }
+
+        public ThryToggleDrawer(string keyword)
+        {
+            this.keyword = keyword;
+        }
+
+        protected override void SetKeyword(MaterialProperty prop, bool on)
+        {
+            SetKeywordInternal(prop, on, "_ON");
+        }
+
+        protected virtual void CheckKeyword(MaterialProperty prop)
+        {
+            foreach (Material m in prop.targets)
+            {
+                if (m.GetFloat(prop.name) == 1)
+                    m.EnableKeyword((string)keyword);
+                else
+                    m.DisableKeyword((string)keyword);
+            }
+        }
+
+        protected void SetKeywordInternal(MaterialProperty prop, bool on, string defaultKeywordSuffix)
+        {
+            // if no keyword is provided, use <uppercase property name> + defaultKeywordSuffix
+            string kw = string.IsNullOrEmpty(keyword) ? prop.name.ToUpperInvariant() + defaultKeywordSuffix : keyword;
+            // set or clear the keyword
+            foreach (Material material in prop.targets)
+            {
+                if (on)
+                    material.EnableKeyword(kw);
+                else
+                    material.DisableKeyword(kw);
+            }
+        }
+    }
     public class CurveDrawer : MaterialPropertyDrawer
     {
         public AnimationCurve curve;
@@ -71,10 +186,10 @@ namespace Thry
         {
             if (imageData == null)
             {
-                if (ShaderEditor.currentlyDrawing.currentProperty.options.texture == null)
+                if (ShaderEditor.active.currentProperty.options.texture == null)
                     imageData = new TextureData();
                 else
-                    imageData = ShaderEditor.currentlyDrawing.currentProperty.options.texture;
+                    imageData = ShaderEditor.active.currentProperty.options.texture;
             }
         }
 
@@ -158,7 +273,7 @@ namespace Thry
             if (ShaderEditor.input.MouseClick && border_position.Contains(Event.current.mousePosition))
             {
                 ShaderEditor.input.Use();
-                PropertyOptions options = ShaderEditor.currentlyDrawing.currentProperty.options;
+                PropertyOptions options = ShaderEditor.active.currentProperty.options;
                 GradientEditor.Open(data, prop, options.texture, options.force_texture_options, !options.force_texture_options);
             }
 
@@ -239,10 +354,9 @@ namespace Thry
     {
         public override void OnGUI(Rect position, MaterialProperty prop, GUIContent label, MaterialEditor editor)
         {
-            Vector3 vec = new Vector3(prop.vectorValue.x, prop.vectorValue.y, prop.vectorValue.z);
             EditorGUI.BeginChangeCheck();
-            
-            vec = EditorGUI.Vector3Field(position, label, vec);
+            EditorGUI.showMixedValue = prop.hasMixedValue;
+            Vector4 vec = EditorGUI.Vector3Field(position, label, prop.vectorValue);
             if (EditorGUI.EndChangeCheck())
             {
                 prop.vectorValue = new Vector4(vec.x, vec.y, vec.z, prop.vectorValue.w);
@@ -260,9 +374,9 @@ namespace Thry
     {
         public override void OnGUI(Rect position, MaterialProperty prop, GUIContent label, MaterialEditor editor)
         {
-            Vector2 vec = new Vector2(prop.vectorValue.x, prop.vectorValue.y);
             EditorGUI.BeginChangeCheck();
-            vec = EditorGUI.Vector2Field(position, label, vec);
+            EditorGUI.showMixedValue = prop.hasMixedValue;
+            Vector4 vec = EditorGUI.Vector2Field(position, label, prop.vectorValue);
             if (EditorGUI.EndChangeCheck())
             {
                 prop.vectorValue = new Vector4(vec.x, vec.y, prop.vectorValue.z, prop.vectorValue.w);
@@ -278,9 +392,21 @@ namespace Thry
 
     public class TextureArrayDrawer : MaterialPropertyDrawer
     {
+        private string framesProperty;
+
+        public TextureArrayDrawer()
+        {
+
+        }
+
+        public TextureArrayDrawer(string framesProperty)
+        {
+            this.framesProperty = framesProperty;
+        }
+
         public override void OnGUI(Rect position, MaterialProperty prop, GUIContent label, MaterialEditor editor)
         {
-            ShaderProperty shaderProperty = (ShaderProperty)ShaderEditor.currentlyDrawing.currentProperty;
+            ShaderProperty shaderProperty = (ShaderProperty)ShaderEditor.active.currentProperty;
             GuiHelper.drawConfigTextureProperty(position, prop, label, editor, true, true);
 
             string n = "";
@@ -294,35 +420,40 @@ namespace Thry
                     HanldeDropEvent(prop, shaderProperty);
                 }
             }
-            if (ShaderEditor.currentlyDrawing.firstCall)
-                ShaderEditor.currentlyDrawing.textureArrayProperties.Add(shaderProperty);
+            if (ShaderEditor.active.firstCall)
+                ShaderEditor.active.textureArrayProperties.Add(shaderProperty);
         }
 
         public void HanldeDropEvent(MaterialProperty prop, ShaderProperty shaderProperty)
         {
             string[] paths = DragAndDrop.paths;
+            Texture2DArray tex;
             if (AssetDatabase.GetMainAssetTypeAtPath(paths[0]) != typeof(Texture2DArray))
             {
-                Texture2DArray tex = Converter.PathsToTexture2DArray(paths);
+                tex = Converter.PathsToTexture2DArray(paths);
                 MaterialHelper.UpdateTargetsValue(prop, tex);
-                if (shaderProperty.options.reference_property != null)
-                {
-                    ShaderProperty p;
-                    if(ShaderEditor.currentlyDrawing.propertyDictionary.TryGetValue(shaderProperty.options.reference_property, out p))
-                        MaterialHelper.UpdateFloatValue(p.materialProperty, tex.depth);
-                }
-                prop.textureValue = tex;
             }
             else
             {
-                Texture2DArray tex = AssetDatabase.LoadAssetAtPath<Texture2DArray>(paths[0]);
-                prop.textureValue = tex;
-                if (shaderProperty.options.reference_property != null)
-                {
-                    ShaderProperty p;
-                    if(ShaderEditor.currentlyDrawing.propertyDictionary.TryGetValue(shaderProperty.options.reference_property, out p))
-                        MaterialHelper.UpdateFloatValue(p.materialProperty, tex.depth);
-                }
+                tex = AssetDatabase.LoadAssetAtPath<Texture2DArray>(paths[0]);
+            }
+            prop.textureValue = tex;
+            UpdateFramesProperty(prop, shaderProperty, tex);
+        }
+
+        private void UpdateFramesProperty(MaterialProperty prop, ShaderProperty shaderProperty, Texture2DArray tex)
+        {
+            if (framesProperty != null)
+            {
+                ShaderProperty p;
+                if (ShaderEditor.active.propertyDictionary.TryGetValue(framesProperty, out p))
+                    MaterialHelper.UpdateFloatValue(p.materialProperty, tex.depth);
+            }
+            else if (shaderProperty.options.reference_property != null)
+            {
+                ShaderProperty p;
+                if (ShaderEditor.active.propertyDictionary.TryGetValue(shaderProperty.options.reference_property, out p))
+                    MaterialHelper.UpdateFloatValue(p.materialProperty, tex.depth);
             }
         }
 
@@ -359,11 +490,11 @@ namespace Thry
         }
     }
 
-    public class ThryHeaderDecorator : MaterialPropertyDrawer
+    public class ThryHeaderLabelDecorator : MaterialPropertyDrawer
     {
         readonly string text;
 
-        public ThryHeaderDecorator(string text)
+        public ThryHeaderLabelDecorator(string text)
         {
             this.text = text;
         }
@@ -380,7 +511,7 @@ namespace Thry
         }
     }
 
-    public class ThryHeader2Drawer : MaterialPropertyDrawer
+    public class ThryHeaderLabel2Drawer : MaterialPropertyDrawer
     {
         public override float GetPropertyHeight(MaterialProperty prop, string label, MaterialEditor editor)
         {
@@ -392,6 +523,76 @@ namespace Thry
             position = EditorGUI.IndentedRect(position);
             GUI.Label(position, label, EditorStyles.boldLabel);
         }
+    }
+
+    public class ReferencePropertyDecorator : MaterialPropertyDrawer
+    {
+        readonly string property;
+
+        public ReferencePropertyDecorator(string property)
+        {
+            this.property = property;
+        }
+
+        public override float GetPropertyHeight(MaterialProperty prop, string label, MaterialEditor editor)
+        {
+            if(DrawingData.lastInitiatedPart != null)
+            {
+                DrawingData.lastInitiatedPart.SetReferenceProperty(property);
+            }
+            return 0;
+        }
+
+        public override void OnGUI(Rect position, MaterialProperty prop, string label, MaterialEditor editor){}
+    }
+
+    public class ReferencePropertiesDecorator : MaterialPropertyDrawer
+    {
+        readonly string[] properties;
+
+        public ReferencePropertiesDecorator(bool mainInit, params string[] properties)
+        {
+            this.properties = properties;
+        }
+
+        public ReferencePropertiesDecorator(string property0, string property1, string property2, string property3, string property4, string property5) : this(true, property0, property1, property2, property3, property4, property5){}
+        public ReferencePropertiesDecorator(string property0, string property1, string property2, string property3, string property4) : this(true, property0, property1, property2, property3, property4){}
+        public ReferencePropertiesDecorator(string property0, string property1, string property2, string property3) : this(true, property0, property1, property2, property3){}
+        public ReferencePropertiesDecorator(string property0, string property1, string property2) : this(true, property0, property1, property2){}
+        public ReferencePropertiesDecorator(string property0, string property1) : this(true, property0, property1){}
+        public ReferencePropertiesDecorator(string property0) : this(true, property0){}
+
+        public override float GetPropertyHeight(MaterialProperty prop, string label, MaterialEditor editor)
+        {
+            if (DrawingData.lastInitiatedPart != null)
+            {
+                DrawingData.lastInitiatedPart.SetReferenceProperties(properties);
+            }
+            return 0;
+        }
+
+        public override void OnGUI(Rect position, MaterialProperty prop, string label, MaterialEditor editor) { }
+    }
+
+    public class TooltipDecorator : MaterialPropertyDrawer
+    {
+        readonly string tooltip;
+
+        public TooltipDecorator(string tooltip)
+        {
+            this.tooltip = tooltip;
+        }
+
+        public override float GetPropertyHeight(MaterialProperty prop, string label, MaterialEditor editor)
+        {
+            if (DrawingData.lastInitiatedPart != null)
+            {
+                DrawingData.lastInitiatedPart.SetTooltip(tooltip);
+            }
+            return 0;
+        }
+
+        public override void OnGUI(Rect position, MaterialProperty prop, string label, MaterialEditor editor) { }
     }
 
     public enum ColorMask
@@ -469,7 +670,7 @@ namespace Thry
             // Theoretically this shouldn't ever happen since locked in materials have different shaders.
             // But in a case where the material property says its locked in but the material really isn't, this
             // will display and allow users to fix the property/lock in
-            ShaderEditor.currentlyDrawing.isLockedMaterial = shaderOptimizer.floatValue == 1;
+            ShaderEditor.active.isLockedMaterial = shaderOptimizer.floatValue == 1;
             if (shaderOptimizer.hasMixedValue)
             {
                 EditorGUI.BeginChangeCheck();

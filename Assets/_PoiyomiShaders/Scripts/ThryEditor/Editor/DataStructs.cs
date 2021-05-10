@@ -62,32 +62,30 @@ namespace Thry
         public const string TEXTURE_ANIMTED = "thry_animated_icon";
     }
 
-    public struct EditorData
-    {
-        public MaterialEditor editor;
-        public MaterialProperty[] properties;
-        public ShaderEditor gui;
-        public Material[] materials;
-        public Shader shader;
-        public Shader defaultShader;
-        public ShaderPart currentProperty;
-        public Dictionary<string, ShaderProperty> propertyDictionary;
-        public List<ShaderPart> shaderParts;
-        public List<ShaderProperty> textureArrayProperties;
-        public bool firstCall;
-        public bool show_HeaderHider;
-        public bool use_ShaderOptimizer;
-        public bool isLockedMaterial;
-        public string animPropertySuffix;
-    }
-
     public class DrawingData
     {
         public static TextureProperty currentTexProperty;
         public static Rect lastGuiObjectRect;
         public static Rect lastGuiObjectHeaderRect;
+        public static Rect tooltipCheckRect;
         public static bool lastPropertyUsedCustomDrawer;
+        public static DrawerType lastPropertyDrawerType;
+        public static MaterialPropertyDrawer lastPropertyDrawer;
         public static bool is_enabled = true;
+
+        public static ShaderPart lastInitiatedPart;
+
+        public static void ResetLastDrawerData()
+        {
+            lastPropertyUsedCustomDrawer = false;
+            lastPropertyDrawer = null;
+            lastPropertyDrawerType = DrawerType.None;
+        }
+    }
+
+    public enum DrawerType
+    {
+        None, Header
     }
 
     public class GradientData
@@ -157,18 +155,21 @@ namespace Thry
             importer.SaveAndReimport();
         }
 
-        public Texture loaded_texture;
-        public Texture GetTextureFromName()
+        private Texture p_loaded_texture;
+        public Texture loaded_texture
         {
-            if (loaded_texture == null)
+            get
             {
-                string path = FileHelper.FindFile(name, "texture");
-                if (path != null)
-                    loaded_texture = AssetDatabase.LoadAssetAtPath<Texture>(path);
-                else
-                    loaded_texture = new Texture2D(1,1);
+                if (p_loaded_texture == null)
+                {
+                    string path = FileHelper.FindFile(name, "texture");
+                    if (path != null)
+                        p_loaded_texture = AssetDatabase.LoadAssetAtPath<Texture>(path);
+                    else
+                        p_loaded_texture = new Texture2D(1, 1);
+                }
+                return p_loaded_texture;
             }
-            return loaded_texture;
         }
     }
 
@@ -242,11 +243,16 @@ namespace Thry
                     if (set.Length > 1)
                         MaterialHelper.SetMaterialValue(set[0].Trim(), set[1].Trim());
                     break;
+                case DefineableActionType.SET_TAG:
+                    string[] keyValue = Regex.Split(data, @"=");
+                    foreach (Material m in ShaderEditor.active.materials)
+                        m.SetOverrideTag(keyValue[0].Trim(), keyValue[1].Trim());
+                    break;
                 case DefineableActionType.SET_SHADER:
                     Shader shader = Shader.Find(data);
                     if (shader != null)
                     {
-                        foreach (Material m in ShaderEditor.currentlyDrawing.materials)
+                        foreach (Material m in ShaderEditor.active.materials)
                             m.shader = shader;
                     }
                     break;
@@ -261,14 +267,33 @@ namespace Thry
             {
                 action.type = DefineableActionType.URL;
                 action.data = s;
-            }else if (s.StartsWith("shader="))
+            }
+            else if (s.StartsWith("tag::"))
+            {
+                action.type = DefineableActionType.SET_TAG;
+                action.data = s.Replace("tag::", "");
+            }
+            else if (s.StartsWith("shader="))
             {
                 action.type = DefineableActionType.SET_SHADER;
-                action.data = s.Replace("shader=","");
-            }else if (s.Contains("="))
+                action.data = s.Replace("shader=", "");
+            }
+            else if (s.Contains("="))
             {
                 action.type = DefineableActionType.SET_PROPERTY;
                 action.data = s;
+            }
+            return action;
+        }
+
+        public static DefineableAction ParseDrawerParameter(string s)
+        {
+            s = s.Trim();
+            DefineableAction action = new DefineableAction();
+            if (s.StartsWith("youtube#"))
+            {
+                action.type = DefineableActionType.URL;
+                action.data = "https://www.youtube.com/watch?v="+s.Substring(8);
             }
             return action;
         }
@@ -279,7 +304,8 @@ namespace Thry
         NONE,
         URL,
         SET_PROPERTY,
-        SET_SHADER
+        SET_SHADER,
+        SET_TAG
     }
 
     public class DefineableCondition
@@ -306,7 +332,7 @@ namespace Thry
             switch (type)
             {
                 case DefineableConditionType.PROPERTY_BOOL:
-                    ShaderProperty prop = ShaderEditor.currentlyDrawing.propertyDictionary[obj];
+                    ShaderProperty prop = ShaderEditor.active.propertyDictionary[obj];
                     if (prop == null) return false;
                     if (comparator == "##") return prop.materialProperty.floatValue == 1;
                     float f = Parser.ParseFloat(parts[1]);
@@ -318,7 +344,7 @@ namespace Thry
                     if (comparator == "<=") return prop.materialProperty.floatValue <= f;
                     break;
                 case DefineableConditionType.EDITOR_VERSION:
-                    int c_ev = Helper.compareVersions(Config.Get().verion, value);
+                    int c_ev = Helper.compareVersions(Config.Singleton.verion, value);
                     if (comparator == "==") return c_ev == 0;
                     if (comparator == "!=") return c_ev != 0;
                     if (comparator == "<") return c_ev == 1;
@@ -338,11 +364,11 @@ namespace Thry
                     if (comparator == "<=") return c_vrc == 1 || c_vrc == 0;
                     break;
                 case DefineableConditionType.TEXTURE_SET:
-                    ShaderProperty shaderProperty = ShaderEditor.currentlyDrawing.propertyDictionary[data];
+                    ShaderProperty shaderProperty = ShaderEditor.active.propertyDictionary[data];
                     if (shaderProperty == null) return false;
                     return shaderProperty.materialProperty.textureValue != null;
                 case DefineableConditionType.DROPDOWN:
-                    ShaderProperty dropdownProperty = ShaderEditor.currentlyDrawing.propertyDictionary[obj];
+                    ShaderProperty dropdownProperty = ShaderEditor.active.propertyDictionary[obj];
                     if (dropdownProperty == null) return false;
                     if (comparator == "##") return dropdownProperty.materialProperty.floatValue == 1;
                     if (comparator == "==") return "" + dropdownProperty.materialProperty.floatValue == parts[1];

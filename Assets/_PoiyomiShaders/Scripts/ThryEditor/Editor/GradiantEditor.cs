@@ -102,7 +102,7 @@ namespace Thry
 
         private string GradientFileName(string hash, string material_name)
         {
-            Config config = Config.Get();
+            Config config = Config.Singleton;
             string ret = config.gradient_name;
             ret = Regex.Replace(ret, "<hash>", hash);
             ret = Regex.Replace(ret, "<material>", material_name);
@@ -192,7 +192,7 @@ namespace Thry
             prop.textureValue = privious_preview_texture;
             SetGradient(TextureHelper.GetGradient(privious_preview_texture));
             gradient_has_been_edited = false;
-            ShaderEditor.repaint();
+            ShaderEditor.Repaint();
         }
 
         private void TextureSettingsGUI()
@@ -214,14 +214,14 @@ namespace Thry
             textureSettings.ApplyModes(data.preview_texture);
             prop.textureValue = data.preview_texture;
             gradient_has_been_edited = true;
-            ShaderEditor.repaint();
+            ShaderEditor.Repaint();
         }
 
         private void UpdatePreviewTexture(Texture texture)
         {
             data.preview_texture = texture;
             prop.textureValue = texture;
-            ShaderEditor.repaint();
+            ShaderEditor.Repaint();
         }
 
         private void OverrideGradientTexture(Rect position)

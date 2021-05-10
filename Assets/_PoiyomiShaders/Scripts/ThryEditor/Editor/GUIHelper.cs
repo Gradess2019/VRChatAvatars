@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
 
@@ -13,7 +14,7 @@ namespace Thry
 
         public static void drawConfigTextureProperty(Rect position, MaterialProperty prop, GUIContent label, MaterialEditor editor, bool hasFoldoutProperties, bool skip_drag_and_drop_handling = false)
         {
-            switch (Config.Get().default_texture_type)
+            switch (Config.Singleton.default_texture_type)
             {
                 case TextureDisplayType.small:
                     drawSmallTextureProperty(position, prop, label, editor, hasFoldoutProperties);
@@ -35,14 +36,16 @@ namespace Thry
         {
             Rect thumbnailPos = position;
             thumbnailPos.x += hasFoldoutProperties ? 20 : 0;
-            editor.TexturePropertyMiniThumbnail(thumbnailPos, prop, label.text, (hasFoldoutProperties ? "Click here for extra properties" : "") + (label.tooltip != "" ? " | " : "") + label.tooltip);
+            editor.TexturePropertyMiniThumbnail(thumbnailPos, prop, label.text, label.tooltip);
+            DrawingData.currentTexProperty.tooltip.ConditionalDraw(thumbnailPos);
             if (DrawingData.currentTexProperty.reference_property_exists)
             {
-                ShaderProperty property = ShaderEditor.currentlyDrawing.propertyDictionary[DrawingData.currentTexProperty.options.reference_property];
+                ShaderProperty property = ShaderEditor.active.propertyDictionary[DrawingData.currentTexProperty.options.reference_property];
                 Rect r = position;
                 r.x += EditorGUIUtility.labelWidth - CurrentIndentWidth();
                 r.width -= EditorGUIUtility.labelWidth - CurrentIndentWidth();
                 property.Draw(new CRect(r), new GUIContent());
+                property.tooltip.ConditionalDraw(r);
             }
             if (hasFoldoutProperties && DrawingData.currentTexProperty != null)
             {
@@ -61,7 +64,7 @@ namespace Thry
                         EditorGUI.indentLevel += 2;
                         if (DrawingData.currentTexProperty.hasScaleOffset)
                         {
-                            ShaderEditor.currentlyDrawing.editor.TextureScaleOffsetProperty(prop);
+                            ShaderEditor.active.editor.TextureScaleOffsetProperty(prop);
                             if(DrawingData.currentTexProperty.is_animatable)
                                 DrawingData.currentTexProperty.HandleKajAnimatable();
                         }
@@ -70,7 +73,7 @@ namespace Thry
                         if (options.reference_properties != null)
                             foreach (string r_property in options.reference_properties)
                             {
-                                ShaderProperty property = ShaderEditor.currentlyDrawing.propertyDictionary[r_property];
+                                ShaderProperty property = ShaderEditor.active.propertyDictionary[r_property];
                                 property.Draw(useEditorIndent: true);
                             }
                         EditorGUI.indentLevel -= 2;
@@ -82,8 +85,7 @@ namespace Thry
                     }
                 }
             }
-
-            DrawingData.lastGuiObjectHeaderRect = position;
+            
             Rect object_rect = new Rect(position);
             object_rect.height = GUILayoutUtility.GetLastRect().y - object_rect.y + GUILayoutUtility.GetLastRect().height;
             DrawingData.lastGuiObjectRect = object_rect;
@@ -98,10 +100,10 @@ namespace Thry
             editor.TextureProperty(position, prop, label.text, label.tooltip, scaleOffset);
             EditorGUIUtility.labelWidth = defaultLabelWidth;
             EditorGUIUtility.fieldWidth = defaultFieldWidth;
-            DrawingData.lastGuiObjectHeaderRect = position;
             Rect object_rect = new Rect(position);
             object_rect.height += rect.height;
             DrawingData.lastGuiObjectRect = object_rect;
+            DrawingData.currentTexProperty.tooltip.ConditionalDraw(object_rect);
         }
 
         static int texturePickerWindow = -1;
@@ -122,12 +124,13 @@ namespace Thry
                 border.height += 8;
                 foreach (string r_property in DrawingData.currentTexProperty.options.reference_properties)
                 {
-                    border.height += editor.GetPropertyHeight(ShaderEditor.currentlyDrawing.propertyDictionary[r_property].materialProperty);
+                    border.height += editor.GetPropertyHeight(ShaderEditor.active.propertyDictionary[r_property].materialProperty);
                 }
             }
             if (DrawingData.currentTexProperty.reference_property_exists)
             {
-                border.height += editor.GetPropertyHeight(ShaderEditor.currentlyDrawing.propertyDictionary[DrawingData.currentTexProperty.options.reference_property].materialProperty);
+                border.height += 8;
+                border.height += editor.GetPropertyHeight(ShaderEditor.active.propertyDictionary[DrawingData.currentTexProperty.options.reference_property].materialProperty);
             }
 
 
@@ -144,6 +147,7 @@ namespace Thry
             quad.x = border.x + border.width - quad.width - 1;
             quad.y += 2;
 
+            DrawingData.currentTexProperty.tooltip.ConditionalDraw(border);
 
             Rect preview_rect_border = new Rect(position);
             preview_rect_border.height = rect.height + position.height - 6;
@@ -175,7 +179,7 @@ namespace Thry
             if (Event.current.commandName == "ObjectSelectorUpdated" && EditorGUIUtility.GetObjectPickerControlID() == texturePickerWindow && texturePickerWindowProperty.name == prop.name)
             {
                 prop.textureValue = (Texture)EditorGUIUtility.GetObjectPickerObject();
-                ShaderEditor.repaint();
+                ShaderEditor.Repaint();
             }
             if (Event.current.commandName == "ObjectSelectorClosed" && EditorGUIUtility.GetObjectPickerControlID() == texturePickerWindow)
             {
@@ -206,7 +210,7 @@ namespace Thry
 
             //scale offset rect
 
-            if (hasFoldoutProperties)
+            if (hasFoldoutProperties || DrawingData.currentTexProperty.options.reference_property != null)
             {
                 EditorGUI.indentLevel += 2;
 
@@ -226,14 +230,14 @@ namespace Thry
                 PropertyOptions options = DrawingData.currentTexProperty.options;
                 if (options.reference_property != null)
                 {
-                    ShaderProperty property = ShaderEditor.currentlyDrawing.propertyDictionary[options.reference_property];
-                    ShaderEditor.currentlyDrawing.editor.ShaderProperty(property.materialProperty, property.content);
+                    ShaderProperty property = ShaderEditor.active.propertyDictionary[options.reference_property];
+                    property.Draw(useEditorIndent: true);
                 }
                 if (options.reference_properties != null)
                     foreach (string r_property in options.reference_properties)
                     {
-                        ShaderProperty property = ShaderEditor.currentlyDrawing.propertyDictionary[r_property];
-                        ShaderEditor.currentlyDrawing.editor.ShaderProperty(property.materialProperty, property.content);
+                        ShaderProperty property = ShaderEditor.active.propertyDictionary[r_property];
+                        property.Draw(useEditorIndent: true);
                         if (DrawingData.currentTexProperty.is_animatable)
                             property.HandleKajAnimatable();
                     }
@@ -247,8 +251,7 @@ namespace Thry
             GUI.Label(label_rect, label);
 
             GUILayoutUtility.GetRect(0, 5);
-
-            DrawingData.lastGuiObjectHeaderRect = position;
+            
             DrawingData.lastGuiObjectRect = border;
         }
 
@@ -262,9 +265,6 @@ namespace Thry
 
             EditorGUI.LabelField(settingsRect, content);
 
-            float capAtX = vec.x;
-            float capAtY = vec.y;
-
             if (settingsRect.width > 160)
             {
                 Rect numberRect = settingsRect;
@@ -273,12 +273,14 @@ namespace Thry
                 numberRect.x = EditorGUIUtility.labelWidth - (EditorGUI.indentLevel - 1) * 15;
 
                 EditorGUI.BeginChangeCheck();
+                EditorGUI.showMixedValue = prop.hasMixedValue;
                 vec.x = EditorGUI.FloatField(numberRect, vec.x, EditorStyles.textField);
                 changed |= EditorGUI.EndChangeCheck();
 
                 numberRect.x = settingsRect.xMax - numberRect.width;
 
                 EditorGUI.BeginChangeCheck();
+                EditorGUI.showMixedValue = prop.hasMixedValue;
                 vec.y = EditorGUI.FloatField(numberRect, vec.y);
                 changed |= EditorGUI.EndChangeCheck();
 
@@ -287,8 +289,8 @@ namespace Thry
                 sliderRect.xMax -= (kNumberWidth + -8);
             }
 
-            vec.x = Mathf.Clamp(vec.x, vec.z, capAtY);
-            vec.y = Mathf.Clamp(vec.y, capAtX, vec.w);
+            vec.x = Mathf.Clamp(vec.x, vec.z, vec.y);
+            vec.y = Mathf.Clamp(vec.y, vec.x, vec.w);
 
             EditorGUI.BeginChangeCheck();
             EditorGUI.MinMaxSlider(sliderRect, ref vec.x, ref vec.y, vec.z, vec.w);
@@ -405,109 +407,14 @@ namespace Thry
             return changed;
         }
 
-        //draw the render queue selector
-        public static int drawRenderQueueSelector(Shader defaultShader, int customQueueFieldInput)
-        {
-            EditorGUILayout.BeginHorizontal();
-            if (customQueueFieldInput == -1) customQueueFieldInput = ShaderEditor.currentlyDrawing.materials[0].renderQueue;
-            int[] queueOptionsQueues = new int[] { defaultShader.renderQueue, 2000, 2450, 3000, customQueueFieldInput };
-            string[] queueOptions = new string[] { "From Shader", "Geometry", "Alpha Test", "Transparency" };
-            int queueSelection = 4;
-            if (defaultShader.renderQueue == customQueueFieldInput) queueSelection = 0;
-            else
-            {
-                string customOption = null;
-                int q = customQueueFieldInput;
-                if (q < 2000) customOption = queueOptions[1] + "-" + (2000 - q);
-                else if (q < 2450) { if (q > 2000) customOption = queueOptions[1] + "+" + (q - 2000); else queueSelection = 1; }
-                else if (q < 3000) { if (q > 2450) customOption = queueOptions[2] + "+" + (q - 2450); else queueSelection = 2; }
-                else if (q < 5001) { if (q > 3000) customOption = queueOptions[3] + "+" + (q - 3000); else queueSelection = 3; }
-                if (customOption != null) queueOptions = new string[] { "From Shader", "Geometry", "Alpha Test", "Transparency", customOption };
-            }
-            EditorGUILayout.LabelField("Render Queue", GUILayout.ExpandWidth(true));
-            int newQueueSelection = EditorGUILayout.Popup(queueSelection, queueOptions, GUILayout.MaxWidth(100));
-            int newQueue = queueOptionsQueues[newQueueSelection];
-            if (queueSelection != newQueueSelection) customQueueFieldInput = newQueue;
-            int newCustomQueueFieldInput = EditorGUILayout.DelayedIntField(customQueueFieldInput, GUILayout.MaxWidth(65));
-            bool isInput = customQueueFieldInput != newCustomQueueFieldInput || queueSelection != newQueueSelection;
-            customQueueFieldInput = newCustomQueueFieldInput;
-            foreach (Material m in ShaderEditor.currentlyDrawing.materials)
-                if (customQueueFieldInput != m.renderQueue && isInput) m.renderQueue = customQueueFieldInput;
-            if (customQueueFieldInput != ShaderEditor.currentlyDrawing.materials[0].renderQueue && !isInput) customQueueFieldInput = ShaderEditor.currentlyDrawing.materials[0].renderQueue;
-            EditorGUILayout.EndHorizontal();
-            return customQueueFieldInput;
-        }
-
-        //draw all collected footers
-        public static void drawFooters(List<ButtonData> footers)
-        {
-            EditorGUILayout.BeginHorizontal();
-            GUILayout.FlexibleSpace();
-            GUILayout.Space(2);
-            foreach (ButtonData foot in footers)
-            {
-                drawFooter(foot);
-                GUILayout.Space(2);
-            }
-            GUILayout.FlexibleSpace();
-            EditorGUILayout.EndHorizontal();
-        }
-
         public static void DrawLocaleSelection(GUIContent label, string[] locales, int selected)
         {
             EditorGUI.BeginChangeCheck();
             selected = EditorGUILayout.Popup(label.text, selected, locales);
             if (EditorGUI.EndChangeCheck())
             {
-                ShaderEditor.currentlyDrawing.propertyDictionary[ShaderEditor.PROPERTY_NAME_LOCALE].materialProperty.floatValue = selected;
+                ShaderEditor.active.propertyDictionary[ShaderEditor.PROPERTY_NAME_LOCALE].materialProperty.floatValue = selected;
                 ShaderEditor.reload();
-            }
-        }
-
-        //draw single footer
-        private static void drawFooter(ButtonData data)
-        {
-            Button(data, 20);
-        }
-
-        public static void Button(ButtonData button)
-        {
-            Button(button, -1);
-        }
-
-        public static void Button(ButtonData button, int default_height)
-        {
-            GUIContent content;
-            Rect cursorRect;
-            if (button != null)
-            {
-                if (button.texture == null)
-                {
-                    content = new GUIContent(button.text, button.hover);
-                    if (default_height != -1)
-                    {
-                        if (GUILayout.Button(content, GUILayout.ExpandWidth(false), GUILayout.Height(default_height)))
-                            button.action.Perform();
-                    }
-                    else
-                    {
-                        if (GUILayout.Button(content, GUILayout.ExpandWidth(false)))
-                            button.action.Perform();
-                    }
-                    cursorRect = GUILayoutUtility.GetLastRect();
-                }
-                else
-                {
-                    GUILayout.Space(4);
-                    content = new GUIContent(button.texture.GetTextureFromName(), button.hover);
-                    int height = (button.texture.height == 128 && default_height != -1) ? default_height : button.texture.height;
-                    int width = (int)((float)button.texture.loaded_texture.width / button.texture.loaded_texture.height * height);
-                    if (GUILayout.Button(new GUIContent(button.texture.loaded_texture, button.hover), new GUIStyle(), GUILayout.MaxWidth(width), GUILayout.Height(height)))
-                        button.action.Perform();
-                    cursorRect = GUILayoutUtility.GetLastRect();
-                    GUILayout.Space(4);
-                }
-                EditorGUIUtility.AddCursorRect(cursorRect, MouseCursor.Link);
             }
         }
 
@@ -540,20 +447,204 @@ namespace Thry
         }
     }
 
-    public class ShaderEditorHeader
+    public class BetterTooltips
+    {
+        private static Tooltip activeTooltip;
+
+        public class Tooltip
+        {
+            private GUIContent content;
+            private bool empty;
+
+            public bool isSelected { get; private set; } = false;
+
+            private Rect containerRect;
+            private Rect contentRect;
+
+            readonly static Vector2 PADDING = new Vector2(10, 10);
+
+            public Tooltip(string text)
+            {
+                content = new GUIContent(text);
+                empty = string.IsNullOrWhiteSpace(text);
+            }
+
+            public Tooltip(string text, Texture texture)
+            {
+                content = new GUIContent(text, texture);
+                empty = string.IsNullOrWhiteSpace(text) && texture == null;
+            }
+
+            public void SetText(string text)
+            {
+                content.text = text;
+                empty &= string.IsNullOrWhiteSpace(text);
+            }
+
+            public void ConditionalDraw(Rect hoverOverRect)
+            {
+                if (empty) return;
+                bool isSelected = hoverOverRect.Contains(Event.current.mousePosition);
+                if (isSelected )
+                {
+                    CalculatePositions(hoverOverRect);
+                    activeTooltip = this;
+                    this.isSelected = true;
+                }
+            }
+
+            private void CalculatePositions(Rect hoverOverRect)
+            {
+                Vector2 contentSize = EditorStyles.label.CalcSize(content);
+                Vector2 containerPosition = new Vector2(Event.current.mousePosition.x - contentSize.x / 2 - PADDING.x / 2, hoverOverRect.y - contentSize.y - PADDING.y - 3);
+
+                containerPosition.x = Mathf.Max(0, containerPosition.x);
+                containerPosition.x = Mathf.Min(EditorGUIUtility.currentViewWidth - contentSize.x - PADDING.x, containerPosition.x);
+
+                contentRect = new Rect(containerPosition + new Vector2(PADDING.x/2, PADDING.y/2), contentSize);
+                containerRect = new Rect(containerPosition, contentSize + new Vector2(PADDING.x, PADDING.y));
+            }
+
+            public void Draw()
+            {
+                EditorGUI.DrawRect(containerRect, Styles.backgroundColor);
+                EditorGUI.LabelField(contentRect, content);
+                isSelected = false;
+            }
+        }
+
+        public static void DrawActive()
+        {
+            if(activeTooltip != null)
+            {
+                if (activeTooltip.isSelected)
+                {
+                    activeTooltip.Draw();
+                }
+                else
+                {
+                    activeTooltip = null;
+                }
+            }
+        }
+    }
+
+    public class FooterButton
+    {
+        private GUIContent content;
+        private bool isTextureContent;
+        const int texture_height = 40;
+        int texture_width;
+        private ButtonData data;
+
+        public FooterButton(ButtonData data)
+        {
+            this.data = data;
+            if (data != null)
+            {
+                if (data.texture == null)
+                {
+                    content = new GUIContent(data.text, data.hover);
+                    isTextureContent = false;
+                }
+                else
+                {
+                    texture_width = (int)((float)data.texture.loaded_texture.width / data.texture.loaded_texture.height * texture_height);
+                    content = new GUIContent(data.texture.loaded_texture, data.hover);
+                    isTextureContent = true;
+                }
+            }
+            else
+            {
+                content = new GUIContent();
+            }
+        }
+
+        public void Draw()
+        {
+            Rect cursorRect;
+            if (isTextureContent)
+            {
+                if(GUILayout.Button(content, new GUIStyle(), GUILayout.MaxWidth(texture_width), GUILayout.Height(texture_height))){
+                    data.action.Perform();
+                }
+                cursorRect = GUILayoutUtility.GetLastRect();
+                GUILayout.Space(8);
+            }
+            else
+            {
+                if (GUILayout.Button(content, GUILayout.ExpandWidth(false), GUILayout.Height(texture_height)))
+                    data.action.Perform();
+                cursorRect = GUILayoutUtility.GetLastRect();
+                GUILayout.Space(2);
+            }
+            EditorGUIUtility.AddCursorRect(cursorRect, MouseCursor.Link);
+        }
+
+        public static void DrawList(List<FooterButton> list)
+        {
+            EditorGUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+            GUILayout.Space(2);
+            foreach (FooterButton b in list)
+            {
+                b.Draw();
+            }
+            GUILayout.FlexibleSpace();
+            EditorGUILayout.EndHorizontal();
+        }
+    }
+
+    public class ThryHeaderDrawer : MaterialPropertyDrawer
     {
         private MaterialProperty property;
 
         private bool expanded;
 
-        //private string DATA_KEY;
+        private string keyword;
+        private string end;
 
-        public ShaderEditorHeader(MaterialProperty prop)
+        public bool isHideable;
+
+        public int xOffset = 0;
+
+        private ButtonData button;
+
+        public ThryHeaderDrawer(string end, string keyword, string buttonText, string buttonHover, string buttonAction, float isHideable)
         {
-            //DATA_KEY = "Header_" + prop.name + "_State";
-            //this.expanded = PersistentData.Get(DATA_KEY) == "expanded";
-            this.property = prop;
-            this.expanded = prop.floatValue == 1;
+            this.end = end;
+            this.keyword = keyword;
+
+            button = new ButtonData();
+            button.text = buttonText;
+            button.hover = buttonHover;
+            button.action = DefineableAction.ParseDrawerParameter(buttonAction);
+
+            this.isHideable = isHideable == 1;
+        }
+        
+        public ThryHeaderDrawer(string end, string keyword, string buttonText, string buttonHover, string buttonAction) : this(end, keyword, buttonText, buttonHover, buttonAction, 0          ) { }
+        public ThryHeaderDrawer(string end, string keyword, float isHideable) :                                           this(end, keyword, null,       null,        null,         isHideable ) { }
+        public ThryHeaderDrawer(string end, string keyword) :                                                             this(end, keyword, null,       null,        null,         0          ) { }
+
+        public ThryHeaderDrawer(float isHideable) :                                                                       this(null,null,    null,       null,        null,         isHideable ) { }
+        public ThryHeaderDrawer(float isHideable, string end) :                                                           this(end, null,    null,       null,        null,         isHideable ) { }
+        public ThryHeaderDrawer(float isHideable, string buttonText, string buttonHover, string buttonAction) :           this(null,null,    buttonText, buttonHover, buttonAction, 0          ) { }
+        public ThryHeaderDrawer(float isHideable, string end, string buttonText, string buttonHover, string buttonAction):this(end, null,    buttonText, buttonHover, buttonAction, isHideable ) { }
+
+        public ThryHeaderDrawer(){}
+
+        public string GetEndProperty()
+        {
+            return end;
+        }
+
+        public override float GetPropertyHeight(MaterialProperty prop, string label, MaterialEditor editor)
+        {
+            DrawingData.lastPropertyUsedCustomDrawer = true;
+            DrawingData.lastPropertyDrawerType = DrawerType.Header;
+            DrawingData.lastPropertyDrawer = this;
+            return base.GetPropertyHeight(prop, label, editor);
         }
 
         public bool is_expanded
@@ -567,38 +658,42 @@ namespace Thry
         public void Toggle()
         {
             expanded = !expanded;
-            if (!ShaderEditor.AnimationIsRecording)
+            if (!AnimationMode.InAnimationMode())
             {
-                if (expanded)
-                    property.floatValue = 1;
-                else
-                    property.floatValue = 0;
+                property.floatValue = expanded ? 1 : 0;
             }
         }
 
-        public void Foldout(int xOffset, GUIContent content, ShaderEditor gui)
+        public override void OnGUI(Rect position, MaterialProperty prop, GUIContent label, MaterialEditor editor)
         {
-            PropertyOptions options = ShaderEditor.currentlyDrawing.currentProperty.options;
+            if (!AnimationMode.InAnimationMode() || this.property == null)
+            {
+                this.property = prop;
+                this.expanded = prop.floatValue == 1;
+            }
+
+            PropertyOptions options = ShaderEditor.active.currentProperty.options;
             Event e = Event.current;
-            GUIStyle style = new GUIStyle(Styles.dropDownHeader);
-            style.margin.left = 15 * xOffset + 15;
 
-            Rect rect = GUILayoutUtility.GetRect(16f + 20f, 22f, style);
-            DrawingData.lastGuiObjectHeaderRect = rect;
+            int offset = 15 * xOffset + 15;
+            position.width -= offset - position.x;
+            position.x = offset;
 
-            DrawBoxAndContent(rect, e, content, options, style);
+            DrawingData.lastGuiObjectHeaderRect = position;
 
-            DrawSmallArrow(rect, e);
-            HandleToggleInput(e, rect);
+            DrawBoxAndContent(position, e, label, options);
+
+            DrawSmallArrow(position, e);
+            HandleToggleInput(e, position);
         }
 
-        private void DrawBoxAndContent(Rect rect, Event e, GUIContent content, PropertyOptions options, GUIStyle style)
+        private void DrawBoxAndContent(Rect rect, Event e, GUIContent content, PropertyOptions options)
         {
-            if (options.reference_property != null)
+            if (options.reference_property != null && ShaderEditor.active.propertyDictionary.ContainsKey(options.reference_property))
             {
-                GUI.Box(rect, new GUIContent("     " + content.text, content.tooltip), style);
+                GUI.Box(rect, new GUIContent("     " + content.text, content.tooltip), Styles.dropDownHeader);
                 DrawIcons(rect, e);
-                DrawButton(rect, options, e, style);
+                DrawButton(rect, options, e);
 
                 Rect togglePropertyRect = new Rect(rect);
                 togglePropertyRect.x += 5;
@@ -607,19 +702,35 @@ namespace Thry
                 togglePropertyRect.width = GUI.skin.font.fontSize * 3;
                 float fieldWidth = EditorGUIUtility.fieldWidth;
                 EditorGUIUtility.fieldWidth = 20;
-                ShaderProperty prop = ShaderEditor.currentlyDrawing.propertyDictionary[options.reference_property];
+                ShaderProperty prop = ShaderEditor.active.propertyDictionary[options.reference_property];
 
                 int xOffset = prop.xOffset;
                 prop.xOffset = 0;
-                prop.Draw(new CRect(togglePropertyRect), new GUIContent());
+                prop.Draw(new CRect(togglePropertyRect), new GUIContent(), isInHeader: true);
                 prop.xOffset = xOffset;
                 EditorGUIUtility.fieldWidth = fieldWidth;
+            }else if(keyword != null)
+            {
+                GUI.Box(rect, "     " + content.text, Styles.dropDownHeader);
+                DrawIcons(rect, e);
+                DrawButton(rect, options, e);
+
+                Rect togglePropertyRect = new Rect(rect);
+                togglePropertyRect.x += 20;
+                togglePropertyRect.width = 20;
+
+                EditorGUI.BeginChangeCheck();
+                bool keywordOn = EditorGUI.Toggle(togglePropertyRect, "", ShaderEditor.active.materials[0].IsKeywordEnabled(keyword));
+                if (EditorGUI.EndChangeCheck())
+                {
+                    MaterialHelper.ToggleKeyword(ShaderEditor.active.materials, keyword, keywordOn);
+                }
             }
             else
             {
-                GUI.Box(rect, content, style);
+                GUI.Box(rect, content, Styles.dropDownHeader);
                 DrawIcons(rect, e);
-                DrawButton(rect, options, e, style);
+                DrawButton(rect, options, e);
             }
 
         }
@@ -631,12 +742,13 @@ namespace Thry
         /// <param name="options"></param>
         /// <param name="e"></param>
         /// <param name="style"></param>
-        private void DrawButton(Rect rect, PropertyOptions options, Event e, GUIStyle style)
+        private void DrawButton(Rect rect, PropertyOptions options, Event e)
         {
-            if (options.button_right != null && options.button_right.condition_show.Test())
+            ButtonData button = this.button != null ? this.button : options.button_right;
+            if (button != null && button.condition_show.Test())
             {
                 Rect buttonRect = new Rect(rect);
-                GUIContent buttoncontent = new GUIContent(options.button_right.text, options.button_right.hover);
+                GUIContent buttoncontent = new GUIContent(button.text, button.hover);
                 float width = Styles.dropDownHeaderButton.CalcSize(buttoncontent).x;
                 width = width < rect.width / 3 ? rect.width / 3 : width;
                 buttonRect.x += buttonRect.width - width - 50;
@@ -645,8 +757,8 @@ namespace Thry
                 if (GUI.Button(buttonRect, buttoncontent, Styles.dropDownHeaderButton))
                 {
                     e.Use();
-                    if (options.button_right.action != null)
-                        options.button_right.action.Perform();
+                    if (button.action != null)
+                        button.action.Perform();
                 }
                 EditorGUIUtility.AddCursorRect(buttonRect, MouseCursor.Link);
             }
@@ -680,7 +792,7 @@ namespace Thry
                 float maxY = GUIUtility.ScreenToGUIPoint(new Vector2(0, EditorWindow.focusedWindow.position.y + Screen.height)).y - 2.5f * buttonRect.height;
                 buttonRect.y = Mathf.Min(buttonRect.y - buttonRect.height / 2, maxY);
 
-                ShowHeaderContextMenu(buttonRect, ShaderEditor.currentlyDrawing.currentProperty, ShaderEditor.currentlyDrawing.materials[0]);
+                ShowHeaderContextMenu(buttonRect, ShaderEditor.active.currentProperty, ShaderEditor.active.materials[0]);
             }
         }
 
@@ -691,13 +803,13 @@ namespace Thry
             buttonRect.x += rect.width - 45;
             buttonRect.y += 1;
             buttonRect.height -= 4;
-            List<Material> linked_materials = MaterialLinker.GetLinked(ShaderEditor.currentlyDrawing.currentProperty.materialProperty);
+            List<Material> linked_materials = MaterialLinker.GetLinked(ShaderEditor.active.currentProperty.materialProperty);
             Texture2D icon = Styles.inactive_link_icon;
             if (linked_materials != null)
                 icon = Styles.active_link_icon;
             if (GUI.Button(buttonRect, icon, EditorStyles.largeLabel))
             {
-                MaterialLinker.Popup(buttonRect, linked_materials, ShaderEditor.currentlyDrawing.currentProperty.materialProperty);
+                MaterialLinker.Popup(buttonRect, linked_materials, ShaderEditor.active.currentProperty.materialProperty);
                 e.Use();
             }
         }
@@ -716,12 +828,13 @@ namespace Thry
             menu.AddItem(new GUIContent("Copy"), false, delegate ()
             {
                 Mediator.copy_material = new Material(material);
+                Mediator.transfer_group = property;
             });
             menu.AddItem(new GUIContent("Paste"), false, delegate ()
             {
-                if (Mediator.copy_material != null)
+                if (Mediator.copy_material != null || Mediator.transfer_group != null)
                 {
-                    property.CopyFromMaterial(Mediator.copy_material);
+                    property.TransferFromMaterialAndGroup(Mediator.copy_material, Mediator.transfer_group);
                     List<Material> linked_materials = MaterialLinker.GetLinked(property.materialProperty);
                     if (linked_materials != null)
                         foreach (Material m in linked_materials)
@@ -817,7 +930,7 @@ namespace Thry
 
         private static void UpdateValues()
         {
-            foreach (ShaderPart part in ShaderEditor.currentlyDrawing.shaderParts)
+            foreach (ShaderPart part in ShaderEditor.active.shaderParts)
             {
                 if (part.options.is_hideable == false)
                     continue;
@@ -836,7 +949,7 @@ namespace Thry
             return header.options.is_hideable && ((header.is_hidden && state == HeaderHidingType.custom) || (state == HeaderHidingType.simple && !header.options.is_visible_simple));
         }
 
-        public static void HeaderHiderGUI(EditorData editorData)
+        public static void HeaderHiderGUI(ShaderEditor editor)
         {
             EditorGUILayout.BeginHorizontal(Styles.style_toolbar);
             if (GUILayout.Button("Simple", Styles.style_toolbar_toggle(state == HeaderHidingType.simple)))
@@ -846,7 +959,7 @@ namespace Thry
             Rect right = GUILayoutUtility.GetRect(10, 20);
             Rect arrow = new Rect(right.x + right.width - 20, right.y, 20, 20);
             if (GUI.Button(arrow, Styles.dropdown_settings_icon, EditorStyles.largeLabel))
-                DrawHeaderHiderMenu(arrow, editorData.shaderParts);
+                DrawHeaderHiderMenu(arrow, editor.shaderParts);
             if (GUI.Button(right, "Custom", Styles.style_toolbar_toggle(state == HeaderHidingType.custom)))
                 SetType(HeaderHidingType.custom);
 
