@@ -390,7 +390,7 @@ MonoBehaviour:
   blueprintId: avtr_21ac295f-d979-41b3-abbd-649efeff3fb1
   contentType: 0
   assetBundleUnityVersion: 
-  fallbackStatus: 1
+  fallbackStatus: 0
 --- !u!114 &1806993086
 MonoBehaviour:
   m_ObjectHideFlags: 0

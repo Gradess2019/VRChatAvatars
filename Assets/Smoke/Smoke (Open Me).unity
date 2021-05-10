@@ -360,7 +360,7 @@ MonoBehaviour:
   blueprintId: avtr_46e1fd0b-2a7c-4f91-a626-6a8349287779
   contentType: 0
   assetBundleUnityVersion: 
-  fallbackStatus: 1
+  fallbackStatus: 0
 --- !u!114 &1623973492
 MonoBehaviour:
   m_ObjectHideFlags: 0
